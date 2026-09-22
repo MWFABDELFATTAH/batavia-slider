@@ -1,0 +1,23 @@
+================================================================================
+HISTORICAL CARTOGRAPHIC RECORD: BATAVIA
+================================================================================
+MAP TITLE       : B26056069A - A plan of the city and castle of Batavia.jpg
+YEAR / DATE     : 1746
+CARTOGRAPHER    : Salmon, Thomas, 1679-1767
+REPOSITORY      : Leiden University (KITLV) / Nationaal Archief / Tropenmuseum
+SHELFMARK / ID  : Dutch Colonial Map Collection
+FORMAT / SIZE   : JPG (7.54 MB)
+LOCAL FILENAME  : 1746_B26056069A_-_A_plan_of_the_city_and_castle_of_Bata.jpg
+SOURCE URL      : https://commons.wikimedia.org/wiki/File:B26056069A_-_A_plan_of_the_city_and_castle_of_Batavia.jpg
+RIGHTS / LICENSE: CC0
+
+--------------------------------------------------------------------------------
+ACADEMIC CITATION:
+--------------------------------------------------------------------------------
+Salmon, Thomas, 1679-1767 (1746). "B26056069A - A plan of the city and castle of Batavia.jpg". Shelfmark: Dutch Colonial Map Collection. Dutch National Repositories (KITLV/Nationaal Archief). Permanent URL: https://commons.wikimedia.org/wiki/File:B26056069A_-_A_plan_of_the_city_and_castle_of_Batavia.jpg
+
+--------------------------------------------------------------------------------
+CURATORIAL NOTES / MAP DESCRIPTION:
+--------------------------------------------------------------------------------
+This plan of the city and fortifications of Jakarta is from Thomas Salmon's Modern history. A detailed alpha-numeric key identifies the defences, buildings, streets and canals of the city. Several ships and boats are shown in the harbor
+================================================================================
