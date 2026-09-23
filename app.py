@@ -60,14 +60,8 @@ def home():
     )
     hist_layer.add_to(m)
 
-    # 4. The Swipe Slider
-    try:
-        SideBySideLayers(left_layers=[hist_layer], right_layers=[google_sat]).add_to(m)
-    except TypeError:
-        try:
-            SideBySideLayers([hist_layer], [google_sat]).add_to(m)
-        except TypeError:
-            SideBySideLayers(hist_layer, google_sat).add_to(m)
+    # 4. The Swipe Slider (Updated for Folium 0.20.0)
+    SideBySideLayers(layer_left=hist_layer, layer_right=google_sat).add_to(m)
 
     # Opacity Controls
     folium.LayerControl(collapsed=False).add_to(m)
