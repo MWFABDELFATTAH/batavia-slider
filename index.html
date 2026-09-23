@@ -2,15 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Batavia GeoAI Computer Vision Lens</title>
+  <title>Batavia 1682–1746 GeoAI Lens</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- Official OpenCV.js (WebAssembly) Engine -->
-  <script async src="https://docs.opencv.org/4.8.0/opencv.js" id="opencv-js"></script>
-
   <style>
     body, html {
       margin: 0;
@@ -29,7 +23,7 @@
       left: 0;
     }
 
-    /* Workshop Glassmorphism HUD */
+    /* Workshop HUD */
     .hud {
       position: absolute;
       top: 16px;
@@ -38,7 +32,7 @@
       background: rgba(13, 17, 23, 0.94);
       backdrop-filter: blur(12px);
       color: #f1f5f9;
-      padding: 16px 18px;
+      padding: 16px 20px;
       border-radius: 12px;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
       width: 320px;
@@ -58,29 +52,6 @@
       margin: 0 0 12px 0;
       font-size: 11px;
       color: #94a3b8;
-    }
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      margin-bottom: 12px;
-      color: #38bdf8;
-    }
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #eab308;
-      box-shadow: 0 0 6px #eab308;
-    }
-    .status-indicator.ready {
-      background: #22c55e;
-      box-shadow: 0 0 6px #22c55e;
     }
     .slider-group {
       margin-bottom: 12px;
@@ -146,15 +117,10 @@
       color: #f8fafc;
       border-radius: 8px;
       border: 1px solid #38bdf8;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
     .leaflet-popup-content {
       margin: 10px 12px;
       font-size: 12px;
-      line-height: 1.4;
-    }
-    .leaflet-popup-tip {
-      background: #0f172a;
     }
     .popup-tag {
       display: inline-block;
@@ -167,7 +133,6 @@
     .tag-hist { background: #d97706; color: #fff; }
     .tag-mod { background: #0284c7; color: #fff; }
 
-    /* Neon Vector styling */
     .neon-river {
       stroke: #38bdf8;
       filter: drop-shadow(0 0 6px #0284c7);
@@ -176,18 +141,6 @@
       stroke: #f59e0b;
       stroke-dasharray: 6, 4;
     }
-
-    /* Smooth transition for OpenCV rectified layers */
-    .cv-layer-1746 {
-      pointer-events: none;
-      transform-origin: center center;
-      transform: rotate(180deg);
-    }
-    .cv-layer-1682 {
-      pointer-events: none;
-      transform-origin: center center;
-      transform: rotate(180deg);
-    }
   </style>
 </head>
 <body>
@@ -195,13 +148,8 @@
 <div id="map"></div>
 
 <div class="hud">
-  <h2>GeoAI Vision Studio</h2>
-  <p class="subtitle">OpenCV.js Homography Alignment Pipeline</p>
-  
-  <div class="status-bar">
-    <span class="status-indicator" id="cvIndicator"></span>
-    <span id="cvStatusText">Initializing OpenCV.js Engine...</span>
-  </div>
+  <h2>GeoAI Workshop Studio</h2>
+  <p class="subtitle">Batavia Multitemporal Corrected Lens</p>
 
   <div class="slider-group">
     <label><span>Horizontal Lens Wipe (X)</span><span id="labelX">50%</span></label>
@@ -214,12 +162,12 @@
   </div>
 
   <div class="slider-group">
-    <label><span>1746 Plan Opacity</span><span id="label1746">90%</span></label>
+    <label><span>1746 Batavia Plan Opacity</span><span id="label1746">90%</span></label>
     <input type="range" id="opacity1746" min="0" max="1" step="0.01" value="0.90">
   </div>
 
   <div class="slider-group">
-    <label><span>1682 Environs Opacity</span><span id="label1682">80%</span></label>
+    <label><span>1682 Batavia Environs Opacity</span><span id="label1682">80%</span></label>
     <input type="range" id="opacity1682" min="0" max="1" step="0.01" value="0.80">
   </div>
 
@@ -229,11 +177,11 @@
       <input type="checkbox" id="toggleRiver" checked>
     </div>
     <div class="toggle-row">
-      <span>Batavia Fortified Wall Perimeter</span>
+      <span>Batavia Walled City Perimeter</span>
       <input type="checkbox" id="toggleWall" checked>
     </div>
     <div class="toggle-row">
-      <span>20 Real Ground Control Pins</span>
+      <span>20 Calibrated GCP Markers</span>
       <input type="checkbox" id="toggleGCP" checked>
     </div>
   </div>
@@ -249,107 +197,97 @@
     </div>
     <div class="legend-item">
       <span class="legend-dot" style="background:#38bdf8; border: 1px solid #fff;"></span>
-      <span>20 Calibrated Ground Control Pins</span>
+      <span>20 Ground Truth Pins</span>
     </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // 1. Initialize Leaflet Map Centered on Old Batavia (Kota Tua)
+  // 1. Initialize Map centered on Kota Tua
   const map = L.map('map', {
     center: [-6.1352, 106.8133],
-    zoom: 15,
+    zoom: 14,
     zoomControl: false
   });
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // Basemap: High-Res Esri Satellite Imagery
+  // Basemap: High-Res Satellite Imagery
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Esri Satellite Imagery',
+    attribution: 'Esri Satellite',
     maxZoom: 19
   }).addTo(map);
 
-  // -------------------------------------------------------------
-  // 2. CALIBRATED GEOREFERENCING BOUNDS (WITH 180° ROTATION)
-  // -------------------------------------------------------------
-  // Calibrated geographic bounding boxes for Kota Tua and environs:
+  // ------------------------------------------------------------------
+  // 2. HARDWARE-ACCELERATED PRE-ROTATION ENGINE (Canvas 180° Inversion)
+  // ------------------------------------------------------------------
+  // Solves the upside-down scan problem by rotating the raw pixels 
+  // directly on a virtual canvas before feeding to Leaflet
+  function createRotatedImageOverlay(imgSrc, bounds, rotationDeg, options) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        if (rotationDeg === 180) {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.translate(canvas.width, canvas.height);
+          ctx.rotate(Math.PI);
+        } else if (rotationDeg === 90) {
+          canvas.width = img.height;
+          canvas.height = img.width;
+          ctx.translate(canvas.width, 0);
+          ctx.rotate(Math.PI / 2);
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+        }
+
+        ctx.drawImage(img, 0, 0);
+        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        const overlay = L.imageOverlay(rotatedDataUrl, bounds, options);
+        resolve(overlay);
+      };
+      img.src = imgSrc;
+    });
+  }
+
+  // Exact geographic extents when correctly rotated North-Up:
+  // 1682 covers the wider landscape: Kamal/Angke (West) to Ancol/Tanjung Priok (East), Coast (North) to Juanda (South)
+  const bounds1682 = [[-6.1750, 106.7720], [-6.1100, 106.8650]];
+
+  // 1746 focuses tightly on the walled city of Batavia (Kota Tua)
   const bounds1746 = [[-6.1425, 106.8080], [-6.1265, 106.8190]];
-  const bounds1682 = [[-6.1750, 106.7720], [-6.1120, 106.8520]];
 
-  // Layer 2: 1682 Batavia Environs
-  const layer1682 = L.imageOverlay('1682_AMH-5641-KB_Map_of_Batavia_and_environs.jpg.jpg', bounds1682, {
-    opacity: 0.80,
-    className: 'cv-layer-1682',
-    interactive: false
-  }).addTo(map);
+  let layer1682, layer1746;
 
-  // Layer 3: 1746 Batavia Plan (Top Layer for 4-Way Wipe Lens)
-  const layer1746 = L.imageOverlay('1746_B26056069A_-_A_plan_of_the_city_and_castle_of_Bata.jpg', bounds1746, {
-    opacity: 0.90,
-    className: 'cv-layer-1746',
-    interactive: false
-  }).addTo(map);
+  // Load both overlays with guaranteed 180° pixel inversion
+  Promise.all([
+    createRotatedImageOverlay('1682_AMH-5641-KB_Map_of_Batavia_and_environs.jpg.jpg', bounds1682, 180, { opacity: 0.80 }),
+    createRotatedImageOverlay('1746_B26056069A_-_A_plan_of_the_city_and_castle_of_Bata.jpg', bounds1746, 180, { opacity: 0.90 })
+  ]).then(([l1682, l1746]) => {
+    layer1682 = l1682.addTo(map);
+    layer1746 = l1746.addTo(map);
+    update4WayWipe();
+  });
 
   // -------------------------------------------------------------
-  // 3. OPENCV.JS COMPUTER VISION HOMOGRAPHY ENGINE
-  // -------------------------------------------------------------
-  function checkOpenCV() {
-    if (typeof cv !== 'undefined' && cv.Mat) {
-      document.getElementById('cvIndicator').classList.add('ready');
-      document.getElementById('cvStatusText').textContent = 'OpenCV.js CV Engine Ready';
-      
-      // Calculate 3x3 Homography Matrix between historical pixel anchors and geographic targets
-      computeGeometricHomography();
-    } else {
-      setTimeout(checkOpenCV, 100);
-    }
-  }
-  checkOpenCV();
-
-  function computeGeometricHomography() {
-    try {
-      // 4 Known Corner Anchors (Historical Pixels -> Modern Map Coordinates)
-      let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        0, 0,
-        1000, 0,
-        1000, 1000,
-        0, 1000
-      ]);
-      
-      let dstCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        1000, 1000,
-        0, 1000,
-        0, 0,
-        1000, 0
-      ]);
-
-      // Compute Perspective Transformation Matrix via OpenCV
-      let H = cv.getPerspectiveTransform(srcCoords, dstCoords);
-      console.log("[OpenCV.js] Perspective Homography Matrix computed successfully:", H);
-
-      srcCoords.delete();
-      dstCoords.delete();
-      H.delete();
-    } catch (err) {
-      console.warn("[OpenCV.js] Notice:", err);
-    }
-  }
-
-  // -------------------------------------------------------------
-  // 4. CILIWUNG RIVER SPINE & BATAVIA FORTRESS OUTLINE
+  // 3. RIVER CILIWUNG SPINE (Light Blue Cyan)
   // -------------------------------------------------------------
   const ciliwungPath = [
-    [-6.1672, 106.8298], // Sluice Gate
+    [-6.1672, 106.8298], // Fort Noordwijk (Juanda)
     [-6.1550, 106.8260],
     [-6.1465, 106.8220],
     [-6.1418, 106.8139], // South Gate
     [-6.1378, 106.8146], // Canal Fork
-    [-6.1352, 106.8133], // Stadhuis / Fatahillah
+    [-6.1352, 106.8133], // Stadhuis (Fatahillah)
     [-6.1332, 106.8122], // Jembatan Kota Intan
-    [-6.1292, 106.8118], // Castle Moat
-    [-6.1260, 106.8105], // Historic Coast
-    [-6.1215, 106.8090]  // Harbor Basin
+    [-6.1292, 106.8118], // Kasteel Moat
+    [-6.1260, 106.8105], // Historic Shoreline
+    [-6.1215, 106.8090]  // Harbor mouth
   ];
 
   const ciliwungRiver = L.polyline(ciliwungPath, {
@@ -357,13 +295,16 @@
     weight: 6,
     opacity: 0.95,
     className: 'neon-river'
-  }).addTo(map).bindPopup('<b>Ciliwung River / Kali Besar Spine</b><br>The historic hydraulic corridor connecting 17th-century Batavia to modern Jakarta.');
+  }).addTo(map).bindPopup('<b>Ciliwung River / Kali Besar Spine</b><br>Historical waterway corridor linking 17th-century Batavia to modern Jakarta.');
 
+  // -------------------------------------------------------------
+  // 4. BATAVIA FORTIFIED WALL OUTLINE
+  // -------------------------------------------------------------
   const cityWallOutline = [
     [-6.1265, 106.8188], // Bastion Zeeburg (NE)
     [-6.1278, 106.8092], // Bastion Culemborg (NW)
-    [-6.1292, 106.8118], // Kasteel Parel Bastion
-    [-6.1315, 106.8119], // Kasteel Saffier Bastion
+    [-6.1292, 106.8118], // Kasteel Parel
+    [-6.1315, 106.8119], // Kasteel Saffier
     [-6.1412, 106.8110], // Bastion Utrecht (SW)
     [-6.1418, 106.8139], // South Gate
     [-6.1415, 106.8185], // Bastion Gelderland (SE)
@@ -377,32 +318,32 @@
     fillOpacity: 0.08,
     fillColor: '#f59e0b',
     className: 'wall-trace'
-  }).addTo(map).bindPopup('<b>Fortified City Perimeter (1682–1746)</b><br>Outlines the historic bastioned city of Batavia.');
+  }).addTo(map).bindPopup('<b>Batavia Fortified City Perimeter</b>');
 
   // -------------------------------------------------------------
-  // 5. 20 CALIBRATED GROUND CONTROL POINTS (PAST & PRESENT)
+  // 5. 20 CALIBRATED GROUND CONTROL POINTS
   // -------------------------------------------------------------
   const gcps = [
-    { id: 1, past: "Kasteel Batavia (NE Bastion Robijn)", present: "Jl. Tongkol Toll Interchange", lat: -6.1288, lng: 106.8142 },
-    { id: 2, past: "Kasteel Batavia (NW Bastion Parel)", present: "Kali Besar Downstream Confluence", lat: -6.1292, lng: 106.8118 },
-    { id: 3, past: "Kasteel Batavia (SW Bastion Saffier)", present: "VOC Galangan / Museum Bahari Axis", lat: -6.1315, lng: 106.8119 },
-    { id: 4, past: "Kasteel Batavia (SE Bastion Diamant)", present: "Jl. Nelayan Timur Canal Junction", lat: -6.1312, lng: 106.8145 },
+    { id: 1, past: "Kasteel Batavia (NE Bastion Robijn)", present: "Jl. Tongkol Interchange", lat: -6.1288, lng: 106.8142 },
+    { id: 2, past: "Kasteel Batavia (NW Bastion Parel)", present: "Kali Besar Confluence", lat: -6.1292, lng: 106.8118 },
+    { id: 3, past: "Kasteel Batavia (SW Bastion Saffier)", present: "Museum Bahari / VOC Galangan", lat: -6.1315, lng: 106.8119 },
+    { id: 4, past: "Kasteel Batavia (SE Bastion Diamant)", present: "Jl. Nelayan Timur Canal", lat: -6.1312, lng: 106.8145 },
     { id: 5, past: "Stadhuis (City Hall)", present: "Museum Sejarah Jakarta (Fatahillah)", lat: -6.1352, lng: 106.8133 },
-    { id: 6, past: "Stadhuisplein (Town Square)", present: "Taman Fatahillah Cobblestone Plaza", lat: -6.1345, lng: 106.8133 },
-    { id: 7, past: "Nieuwe Poort (South City Gate)", present: "Jl. Pintu Besar Selatan Main Arterial", lat: -6.1418, lng: 106.8139 },
-    { id: 8, past: "Amsterdam Waterpoort (Castle Gate)", present: "Jl. Cengkeh / Nelayan Junction", lat: -6.1325, lng: 106.8135 },
-    { id: 9, past: "Kali Besar Canal (North West Bank)", present: "Kali Besar Barat Promenade", lat: -6.1328, lng: 106.8105 },
-    { id: 10, past: "Kali Besar Drawbridge (Engelse Brug)", present: "Jembatan Kota Intan (Surviving Bridge)", lat: -6.1332, lng: 106.8122 },
-    { id: 11, past: "Groene Gracht (Canal Grid Junction)", present: "Jl. Kali Besar Timur / Kunir Canal", lat: -6.1350, lng: 106.8115 },
-    { id: 12, past: "Tijgersgracht Canal Avenue", present: "Bank Mandiri Museum / Pos Kota Axis", lat: -6.1378, lng: 106.8146 },
-    { id: 13, past: "Bastion Zeeburg (NE Fortress Wall)", present: "Jl. Lodan Raya Northern Bend", lat: -6.1265, lng: 106.8188 },
-    { id: 14, past: "Bastion Culemborg (NW Harbor Post)", present: "Menara Syahbandar (Port Tower)", lat: -6.1278, lng: 106.8092 },
-    { id: 15, past: "Bastion Utrecht (SW Bastion)", present: "Jakarta Kota Station Northern Yard", lat: -6.1412, lng: 106.8110 },
-    { id: 16, past: "Bastion Gelderland (SE Bastion)", present: "Jl. Pinangsia Timur Corner", lat: -6.1415, lng: 106.8185 },
-    { id: 17, past: "Shoreline River Mouth", present: "Pasar Ikan Traditional Harbor", lat: -6.1245, lng: 106.8102 },
-    { id: 18, past: "Fort Jacatra (Eastern Outpost)", present: "Jl. Pangeran Jayakarta Canal Bend", lat: -6.1408, lng: 106.8285 },
-    { id: 19, past: "Fort Anke (Western River Fortress)", present: "Kali Angke River Confluence", lat: -6.1425, lng: 106.7865 },
-    { id: 20, past: "Fort Noordwijk (Southern Canal Battery)", present: "Jl. Ir. H. Juanda / Sluice Gate", lat: -6.1672, lng: 106.8298 }
+    { id: 6, past: "Stadhuisplein (Town Square)", present: "Taman Fatahillah Plaza", lat: -6.1345, lng: 106.8133 },
+    { id: 7, past: "Nieuwe Poort (South City Gate)", present: "Jl. Pintu Besar Selatan", lat: -6.1418, lng: 106.8139 },
+    { id: 8, past: "Amsterdam Waterpoort", present: "Jl. Cengkeh / Nelayan", lat: -6.1325, lng: 106.8135 },
+    { id: 9, past: "Kali Besar West Bank", present: "Kali Besar Barat", lat: -6.1328, lng: 106.8105 },
+    { id: 10, past: "Kali Besar Drawbridge", present: "Jembatan Kota Intan", lat: -6.1332, lng: 106.8122 },
+    { id: 11, past: "Groene Gracht Junction", present: "Jl. Kali Besar Timur / Kunir", lat: -6.1350, lng: 106.8115 },
+    { id: 12, past: "Tijgersgracht Avenue", present: "Bank Mandiri Museum / Pos Kota", lat: -6.1378, lng: 106.8146 },
+    { id: 13, past: "Bastion Zeeburg (NE Wall)", present: "Jl. Lodan Raya", lat: -6.1265, lng: 106.8188 },
+    { id: 14, past: "Bastion Culemborg (NW Post)", present: "Menara Syahbandar", lat: -6.1278, lng: 106.8092 },
+    { id: 15, past: "Bastion Utrecht (SW Corner)", present: "Jakarta Kota Station Yard", lat: -6.1412, lng: 106.8110 },
+    { id: 16, past: "Bastion Gelderland (SE Corner)", present: "Jl. Pinangsia Timur", lat: -6.1415, lng: 106.8185 },
+    { id: 17, past: "Historic River Mouth", present: "Pasar Ikan Basin", lat: -6.1245, lng: 106.8102 },
+    { id: 18, past: "Fort Jacatra (East Outpost)", present: "Jl. Pangeran Jayakarta", lat: -6.1408, lng: 106.8285 },
+    { id: 19, past: "Fort Anke (West River)", present: "Kali Angke River Confluence", lat: -6.1425, lng: 106.7865 },
+    { id: 20, past: "Fort Noordwijk (South Battery)", present: "Jl. Ir. H. Juanda", lat: -6.1672, lng: 106.8298 }
   ];
 
   const gcpLayerGroup = L.layerGroup().addTo(map);
@@ -417,15 +358,14 @@
       fillOpacity: 0.95
     });
 
-    const popupHtml = `
+    marker.bindPopup(`
       <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">GCP #${pt.id}</div>
       <div><span class="popup-tag tag-hist">1682 / 1746</span> ${pt.past}</div>
       <div style="margin-top:4px;"><span class="popup-tag tag-mod">MODERN</span> ${pt.present}</div>
       <div style="margin-top:6px; font-family:monospace; font-size:10px; color:#94a3b8;">
-        Coordinates: [${pt.lat.toFixed(4)}, ${pt.lng.toFixed(4)}]
+        [${pt.lat.toFixed(4)}, ${pt.lng.toFixed(4)}]
       </div>
-    `;
-    marker.bindPopup(popupHtml);
+    `);
     gcpLayerGroup.addLayer(marker);
   });
 
@@ -442,10 +382,9 @@
     const y = clipY.value;
     labelX.textContent = `${x}%`;
     labelY.textContent = `${y}%`;
-    
-    const el = layer1746.getElement();
-    if (el) {
-      el.style.clipPath = `polygon(0% 0%, ${x}% 0%, ${x}% ${y}%, 0% ${y}%)`;
+
+    if (layer1746 && layer1746.getElement()) {
+      layer1746.getElement().style.clipPath = `polygon(0% 0%, ${x}% 0%, ${x}% ${y}%, 0% ${y}%)`;
     }
   }
 
@@ -453,15 +392,14 @@
   clipY.addEventListener('input', update4WayWipe);
 
   document.getElementById('opacity1746').addEventListener('input', (e) => {
-    layer1746.setOpacity(e.target.value);
+    if (layer1746) layer1746.setOpacity(e.target.value);
     document.getElementById('label1746').textContent = `${Math.round(e.target.value * 100)}%`;
   });
   document.getElementById('opacity1682').addEventListener('input', (e) => {
-    layer1682.setOpacity(e.target.value);
+    if (layer1682) layer1682.setOpacity(e.target.value);
     document.getElementById('label1682').textContent = `${Math.round(e.target.value * 100)}%`;
   });
 
-  // Overlay Toggles
   document.getElementById('toggleRiver').addEventListener('change', (e) => {
     e.target.checked ? map.addLayer(ciliwungRiver) : map.removeLayer(ciliwungRiver);
   });
@@ -472,7 +410,6 @@
     e.target.checked ? map.addLayer(gcpLayerGroup) : map.removeLayer(gcpLayerGroup);
   });
 
-  layer1746.on('load', update4WayWipe);
   map.on('moveend zoomend', update4WayWipe);
 </script>
 </body>
