@@ -1,28 +1,27 @@
 import folium
 from folium.plugins import SideBySideLayers
-import webbrowser
-import os
 import xml.etree.ElementTree as ET
+import os
 import base64
+from flask import Flask
 
-# 1. Define paths
-KML_FILE = "batavia.kml"
-IMAGE_FILE = "" # Will find it from the KML
-OUTPUT_HTML = "batavia_slider.html"
+# Initialize the Flask Web App
+app = Flask(__name__)
 
-def build_slider():
+@app.route('/')
+def home():
     # Find the folder where this script is running
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # 2. Read the Google Earth KML file to get the exact map boundaries
-    kml_path = os.path.join(script_dir, KML_FILE)
+    # 1. Read the Google Earth KML file
+    kml_path = os.path.join(script_dir, 'batavia.kml')
     tree = ET.parse(kml_path)
     root = tree.getroot()
 
     # Find the image name inside the KML
     href = root.find('.//{*}GroundOverlay/{*}Icon/{*}href').text
-    IMAGE_FILE = os.path.basename(href)
-    img_path = os.path.join(script_dir, IMAGE_FILE)
+    image_filename = os.path.basename(href)
+    img_path = os.path.join(script_dir, image_filename)
 
     # Find the North, South, East, West boundaries
     north = float(root.find('.//{*}north').text)
@@ -33,29 +32,27 @@ def build_slider():
     bounds = [[south, west], [north, east]]
     center = [(north + south) / 2, (east + west) / 2]
 
-    print(f"Found map! Centered at {center}")
-
-    # 3. Convert the image to Base64 so it works 100% offline in the browser
+    # 2. Convert the image to Base64 so it works 100% on the web
     with open(img_path, "rb") as f:
         encoded_image = base64.b64encode(f.read()).decode('utf-8')
     img_data_uri = f"data:image/jpeg;base64,{encoded_image}"
 
-    # 4. Create the map!
+    # 3. Create the map!
     m = folium.Map(location=center, zoom_start=16, tiles=None)
 
     # Google Satellite (Right Side)
     google_sat = folium.TileLayer(
         tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
         attr="Google",
-        name="Modern Jakarta (Satellite)",
+        name="Modern Jakarta",
         overlay=False,
         control=True
     )
     google_sat.add_to(m)
 
-    # 1746 Map (Left Side)
+    # Historical Map (Left Side)
     hist_layer = folium.raster_layers.ImageOverlay(
-        name="1746 Batavia",
+        name="Historical Batavia",
         image=img_data_uri,
         bounds=bounds,
         opacity=0.85,
@@ -63,8 +60,7 @@ def build_slider():
     )
     hist_layer.add_to(m)
 
-    # The Swipe Slider!
-       # This smart block tries different commands depending on your Python version
+    # 4. The Swipe Slider
     try:
         SideBySideLayers(left_layers=[hist_layer], right_layers=[google_sat]).add_to(m)
     except TypeError:
@@ -72,15 +68,13 @@ def build_slider():
             SideBySideLayers([hist_layer], [google_sat]).add_to(m)
         except TypeError:
             SideBySideLayers(hist_layer, google_sat).add_to(m)
-    
+
     # Opacity Controls
     folium.LayerControl(collapsed=False).add_to(m)
 
-    # 5. Save and Open
-    output_path = os.path.join(script_dir, OUTPUT_HTML)
-    m.save(output_path)
-    print(f"Success! Opening map slider in your browser...")
-    webbrowser.open("file://" + output_path)
+    # 5. Return the map HTML directly to the user's browser
+    return m._repr_html_()
 
-if __name__ == "__main__":
-    build_slider()
+# This is required for Render to run the app
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
