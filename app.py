@@ -3,9 +3,48 @@ from branca.element import Element
 import xml.etree.ElementTree as ET
 import os
 import base64
+import cv2
+import numpy as np
 from flask import Flask
 
 app = Flask(__name__)
+
+def segment_water_image(img_path):
+    """
+    Simulates GeoAI Semantic Segmentation using OpenCV.
+    Scans the 1746 map for water-like colors and highlights them in light blue.
+    """
+    # Read the image using OpenCV
+    img = cv2.imread(img_path)
+    if img is None:
+        return None
+
+    # Convert BGR image to HSV for better color segmentation
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # Define range for "water" colors (blues, cyans, sometimes grey-blue)
+    # You may need to tweak these values depending on the exact colors of your map
+    lower_blue = np.array([80, 30, 30])
+    upper_blue = np.array([140, 255, 255])
+
+    # Create a mask that finds only the water pixels
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+
+    # Check if we found any water. If not, return the original image.
+    if cv2.countNonZero(mask) == 0:
+        print("No distinct blue water found in map. Using original image.")
+        with open(img_path, "rb") as f:
+            return f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode('utf-8')}"
+
+    # Highlight the water: Change the masked pixels to bright light blue (BGR: 255, 255, 0)
+    img[mask > 0] = [255, 255, 0]
+
+    # Encode the processed image back to base64
+    _, buffer = cv2.imencode('.jpg', img)
+    encoded_image = base64.b64encode(buffer).decode('utf-8')
+    
+    print("Semantic Segmentation successful: Water highlighted in light blue!")
+    return f"data:image/jpeg;base64,{encoded_image}"
 
 @app.route('/')
 def home():
@@ -26,9 +65,8 @@ def home():
     bounds = [[south, west], [north, east]]
     center = [(north + south) / 2, (east + west) / 2]
 
-    with open(img_path, "rb") as f:
-        encoded_image = base64.b64encode(f.read()).decode('utf-8')
-    img_data_uri = f"data:image/jpeg;base64,{encoded_image}"
+    # --- RUN THE SEMANTIC SEGMENTATION ---
+    img_data_uri = segment_water_image(img_path)
 
     m = folium.Map(location=center, zoom_start=16, tiles=None, width='100%', height='100%')
     map_name = m.get_name()
@@ -52,7 +90,7 @@ def home():
     )
     hist_layer.add_to(m)
 
-    # --- FIXED 2-AXIS SLIDER ---
+    # --- 2-AXIS SLIDER ---
     slider_js = f"""
     <script>
     window.onload = function() {{
@@ -63,12 +101,10 @@ def home():
             var sliderX = mapContainer.clientWidth / 2;
             var sliderY = mapContainer.clientHeight / 2;
 
-            // Vertical Line
             var sliderV = document.createElement('div');
             sliderV.style.cssText = 'position: absolute; top: 0; bottom: 0; width: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ew-resize; left: ' + (sliderX - 2) + 'px; pointer-events: auto;';
             mapContainer.appendChild(sliderV);
 
-            // Horizontal Line
             var sliderH = document.createElement('div');
             sliderH.style.cssText = 'position: absolute; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ns-resize; top: ' + (sliderY - 2) + 'px; pointer-events: auto;';
             mapContainer.appendChild(sliderH);
@@ -83,7 +119,6 @@ def home():
                 var absSliderX = mapRect.left + sliderX;
                 var absSliderY = mapRect.top + sliderY;
 
-                // Calculate insets to ONLY show the bottom-right quadrant of the historical map
                 var left_inset = Math.max(0, absSliderX - imgRect.left);
                 var top_inset = Math.max(0, absSliderY - imgRect.top);
                 var right_inset = 0;
