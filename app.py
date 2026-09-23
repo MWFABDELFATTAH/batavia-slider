@@ -31,7 +31,6 @@ def home():
     img_data_uri = f"data:image/jpeg;base64,{encoded_image}"
 
     m = folium.Map(location=center, zoom_start=16, tiles=None, width='100%', height='100%')
-    
     map_name = m.get_name()
 
     google_sat = folium.TileLayer(
@@ -47,13 +46,13 @@ def home():
         name="Historical Batavia",
         image=img_data_uri,
         bounds=bounds,
-        opacity=1.0, # Default opacity, controlled by the slider
+        opacity=1.0, 
         control=True,
         zindex=1
     )
     hist_layer.add_to(m)
 
-    # --- CUSTOM 2-AXIS SLIDER (North/South & East/West) ---
+    # --- FIXED 2-AXIS SLIDER ---
     slider_js = f"""
     <script>
     window.onload = function() {{
@@ -61,21 +60,19 @@ def home():
             var map = {map_name};
             var mapContainer = document.getElementById('{map_name}');
             
-            // Initial positions (middle of the screen)
             var sliderX = mapContainer.clientWidth / 2;
             var sliderY = mapContainer.clientHeight / 2;
 
-            // Create Vertical Slider (East/West control)
+            // Vertical Line
             var sliderV = document.createElement('div');
             sliderV.style.cssText = 'position: absolute; top: 0; bottom: 0; width: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ew-resize; left: ' + (sliderX - 2) + 'px; pointer-events: auto;';
             mapContainer.appendChild(sliderV);
 
-            // Create Horizontal Slider (North/South control)
+            // Horizontal Line
             var sliderH = document.createElement('div');
             sliderH.style.cssText = 'position: absolute; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ns-resize; top: ' + (sliderY - 2) + 'px; pointer-events: auto;';
             mapContainer.appendChild(sliderH);
 
-            // Clipping Logic
             function updateClip() {{
                 var img = document.querySelector('.leaflet-image-layer');
                 if (!img) return;
@@ -83,21 +80,18 @@ def home():
                 var imgRect = img.getBoundingClientRect();
                 var mapRect = mapContainer.getBoundingClientRect();
                 
-                // Convert slider position to absolute screen coordinates
                 var absSliderX = mapRect.left + sliderX;
                 var absSliderY = mapRect.top + sliderY;
 
-                // Calculate distance from slider to image edges
+                // Calculate insets to ONLY show the bottom-right quadrant of the historical map
                 var left_inset = Math.max(0, absSliderX - imgRect.left);
-                var right_inset = Math.max(0, imgRect.right - absSliderX);
                 var top_inset = Math.max(0, absSliderY - imgRect.top);
-                var bottom_inset = Math.max(0, imgRect.bottom - absSliderY);
+                var right_inset = 0;
+                var bottom_inset = 0;
 
-                // Apply CSS Clip-Path
                 img.style.clipPath = 'inset(' + top_inset + 'px ' + right_inset + 'px ' + bottom_inset + 'px ' + left_inset + 'px)';
             }}
 
-            // Dragging Logic
             function dragStart(e, isVertical) {{
                 e.preventDefault();
                 e.stopPropagation();
@@ -127,15 +121,12 @@ def home():
                 document.addEventListener('mouseup', upHandler);
             }}
             
-            // Attach drag events
             sliderV.addEventListener('mousedown', function(e){{ dragStart(e, true); }});
             sliderH.addEventListener('mousedown', function(e){{ dragStart(e, false); }});
 
-            // Update clip on map movement (pan/zoom)
             map.on('move zoom viewreset', updateClip);
             window.addEventListener('resize', updateClip);
             
-            // Initial clip
             updateClip();
         }}, 500);
     }};
