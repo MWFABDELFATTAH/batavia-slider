@@ -1,3 +1,5 @@
 folium
 flask
 gunicorn
+opencv-python-headless
+numpy
