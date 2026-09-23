@@ -1,5 +1,5 @@
 import folium
-from branca.element import JavascriptLink, CssLink, Element
+from branca.element import Element
 import xml.etree.ElementTree as ET
 import os
 import base64
@@ -32,7 +32,6 @@ def home():
 
     m = folium.Map(location=center, zoom_start=16, tiles=None, width='100%', height='100%')
     
-    # Get the internal names Folium assigns to the map and layers
     map_name = m.get_name()
 
     google_sat = folium.TileLayer(
@@ -43,58 +42,116 @@ def home():
         control=True
     )
     google_sat.add_to(m)
-    right_layer_name = google_sat.get_name()
 
     hist_layer = folium.raster_layers.ImageOverlay(
         name="Historical Batavia",
         image=img_data_uri,
         bounds=bounds,
-        opacity=0.85,
+        opacity=1.0, # Default opacity, controlled by the slider
         control=True,
         zindex=1
     )
     hist_layer.add_to(m)
-    left_layer_name = hist_layer.get_name()
 
-    # --- THE FIX: Raw JavaScript for the Swipe Slider ---
-    m.get_root().header.add_child(
-        JavascriptLink("https://cdn.jsdelivr.net/npm/leaflet-side-by-side@2.2.0/leaflet-side-by-side.js")
-    )
-    m.get_root().header.add_child(
-        CssLink("https://cdn.jsdelivr.net/npm/leaflet-side-by-side@2.2.0/leaflet-side-by-side.css")
-    )
-    
-    # Raw JS to initialize the slider perfectly
+    # --- CUSTOM 2-AXIS SLIDER (North/South & East/West) ---
     slider_js = f"""
     <script>
-        window.onload = function() {{
-            setTimeout(function() {{
-                try {{
-                    var map = {map_name};
-                    var leftLayer = {left_layer_name};
-                    var rightLayer = {right_layer_name};
-                    
-                    // Add the side-by-side slider
-                    L.control.sideBySide(leftLayer, rightLayer).addTo(map);
-                }} catch (e) {{
-                    console.error("Slider initialization failed:", e);
-                }}
-            }}, 500); // Wait 500ms to ensure Leaflet is fully loaded
-        }};
+    window.onload = function() {{
+        setTimeout(function() {{
+            var map = {map_name};
+            var mapContainer = document.getElementById('{map_name}');
+            
+            // Initial positions (middle of the screen)
+            var sliderX = mapContainer.clientWidth / 2;
+            var sliderY = mapContainer.clientHeight / 2;
+
+            // Create Vertical Slider (East/West control)
+            var sliderV = document.createElement('div');
+            sliderV.style.cssText = 'position: absolute; top: 0; bottom: 0; width: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ew-resize; left: ' + (sliderX - 2) + 'px; pointer-events: auto;';
+            mapContainer.appendChild(sliderV);
+
+            // Create Horizontal Slider (North/South control)
+            var sliderH = document.createElement('div');
+            sliderH.style.cssText = 'position: absolute; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.8); box-shadow: 0 0 4px rgba(0,0,0,0.8); z-index: 1000; cursor: ns-resize; top: ' + (sliderY - 2) + 'px; pointer-events: auto;';
+            mapContainer.appendChild(sliderH);
+
+            // Clipping Logic
+            function updateClip() {{
+                var img = document.querySelector('.leaflet-image-layer');
+                if (!img) return;
+                
+                var imgRect = img.getBoundingClientRect();
+                var mapRect = mapContainer.getBoundingClientRect();
+                
+                // Convert slider position to absolute screen coordinates
+                var absSliderX = mapRect.left + sliderX;
+                var absSliderY = mapRect.top + sliderY;
+
+                // Calculate distance from slider to image edges
+                var left_inset = Math.max(0, absSliderX - imgRect.left);
+                var right_inset = Math.max(0, imgRect.right - absSliderX);
+                var top_inset = Math.max(0, absSliderY - imgRect.top);
+                var bottom_inset = Math.max(0, imgRect.bottom - absSliderY);
+
+                // Apply CSS Clip-Path
+                img.style.clipPath = 'inset(' + top_inset + 'px ' + right_inset + 'px ' + bottom_inset + 'px ' + left_inset + 'px)';
+            }}
+
+            // Dragging Logic
+            function dragStart(e, isVertical) {{
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var moveHandler = function(ev) {{
+                    var mapRect = mapContainer.getBoundingClientRect();
+                    if (isVertical) {{
+                        sliderX = ev.clientX - mapRect.left;
+                        if (sliderX < 0) sliderX = 0;
+                        if (sliderX > mapRect.width) sliderX = mapRect.width;
+                        sliderV.style.left = (sliderX - 2) + 'px';
+                    }} else {{
+                        sliderY = ev.clientY - mapRect.top;
+                        if (sliderY < 0) sliderY = 0;
+                        if (sliderY > mapRect.height) sliderY = mapRect.height;
+                        sliderH.style.top = (sliderY - 2) + 'px';
+                    }}
+                    updateClip();
+                }};
+                
+                var upHandler = function() {{
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('mouseup', upHandler);
+                }};
+                
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('mouseup', upHandler);
+            }}
+            
+            // Attach drag events
+            sliderV.addEventListener('mousedown', function(e){{ dragStart(e, true); }});
+            sliderH.addEventListener('mousedown', function(e){{ dragStart(e, false); }});
+
+            // Update clip on map movement (pan/zoom)
+            map.on('move zoom viewreset', updateClip);
+            window.addEventListener('resize', updateClip);
+            
+            // Initial clip
+            updateClip();
+        }}, 500);
+    }};
     </script>
     """
     m.get_root().html.add_child(Element(slider_js))
 
-    # --- Opacity Slider UI ---
+    # --- OPACITY SLIDER UI ---
     opacity_html = """
     <div style="position: fixed; top: 10px; left: 50px; z-index: 9999; background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-family: sans-serif; font-size: 14px;">
-        <label for="opacitySlider" style="font-weight: bold; display: block; margin-bottom: 5px;">1746 Map Opacity: <span id="opacityValue">85%</span></label>
-        <input type="range" id="opacitySlider" min="0" max="100" value="85" style="width: 200px;">
+        <label for="opacitySlider" style="font-weight: bold; display: block; margin-bottom: 5px;">1746 Map Opacity: <span id="opacityValue">100%</span></label>
+        <input type="range" id="opacitySlider" min="0" max="100" value="100" style="width: 200px;">
     </div>
     """
     m.get_root().html.add_child(Element(opacity_html))
 
-    # Raw JS for the Opacity Slider
     opacity_js = """
     <script>
         document.getElementById('opacitySlider').addEventListener('input', function(e) {
