@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<GroundOverlay>
+	<name>1746 Batavia</name>
+	<color>8affffff</color>
+	<Icon>
+		<href>1682_AMH-5641-KB_Map_of_Batavia_and_environs.jpg.jpg</href>
+		<viewBoundScale>0.75</viewBoundScale>
+	</Icon>
+	<LatLonBox>
+		<north>-6.109809901331777</north>
+		<south>-6.188346500366694</south>
+		<east>106.8602490753287</east>
+		<west>106.7625819340814</west>
+	</LatLonBox>
+</GroundOverlay>
+</kml>
